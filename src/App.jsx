@@ -6,19 +6,20 @@ import Footer from './components/footer/Footer'
 import Skills from './components/skills/Skills'
 import About from './components/about/About'
 import Portfolio from './components/portfolio/Portfolio'
-import Chatbot from './components/chatbot/Chatbot'
+import Chatbox from './components/chatbot/Chatbox'
 
 const App = () => {
   return (
     <>
+     
       <Header />
-      <Chatbot />
         <Nav />
-        <About />
+      <About />
         <Skills />
         <Portfolio />
         <Contact />
-        <Footer />
+      <Footer />
+      <Chatbox />
     </>
   )
 }

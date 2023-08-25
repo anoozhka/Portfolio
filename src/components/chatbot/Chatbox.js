@@ -1,136 +1,86 @@
-import React from 'react';
-import './chatbot.css';
+import React, { useState } from 'react'
+import './chatbot.css'
+import chatIcon from "./images/chatbox-icon.svg"
+import axios from 'axios';
 
-class Chatbox extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      isOpen: false,
-      messages: [],
-      inputText: '',
-    };
-    this.args = {
-      openButton: document.querySelector('.chatbox__button button'),
-      chatBox: document.querySelector('.chatbox__support'),
-      sendButton: document.querySelector('.chatbox__send--footer'),
-    };
+function Chatbox() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [allMessages, setAllMessages] = useState([]);
+
+
+  const onSendButton = async () => {
+  if (message === '') {
+    return;
   }
 
-  display() {
-    const { openButton, chatBox, sendButton } = this.args;
+  const newMessage = { name: 'User', message: message };
+  setAllMessages((prevMessages) => [...prevMessages, newMessage]);
+  setMessage('');
 
-    openButton.addEventListener('click', () => this.toggleState());
-
-    sendButton.addEventListener('click', () => this.onSendButton());
-
-    const node = chatBox.querySelector('input');
-    node.addEventListener('keyup', ({ key }) => {
-      if (key === 'Enter') {
-        this.onSendButton();
-      }
-    });
-  }
-
-  toggleState = () => {
-    this.setState((prevState) => ({
-      isOpen: !prevState.isOpen,
-    }));
+  const body = {
+    message: message
   };
 
-  onSendButton = () => {
-    const { inputText } = this.state;
-    if (inputText === '') {
-      return;
+  const response = await axios.post("http://localhost:5000/predict", body);
+  const responseMessage = { name: 'Sam', message: response.data.answer };
+  setAllMessages((prevMessages) => [...prevMessages, responseMessage]);
+};
+
+ const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      onSendButton();
     }
-
-    const newMessage = { name: 'User', message: inputText };
-    this.setState((prevState) => ({
-      messages: [...prevState.messages, newMessage],
-      inputText: '',
-    }));
-
-    fetch('http://127.0.0.1:5000/predict', {
-      method: 'POST',
-      body: JSON.stringify({ message: inputText }),
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const responseMessage = { name: 'Sam', message: data.answer };
-        this.setState((prevState) => ({
-          messages: [...prevState.messages, responseMessage],
-        }));
-        this.updateChatText();
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-        this.updateChatText();
-      });
   };
+  
+  return (
+    <div className="container" >
+      <div className="chatbox">
 
-  updateChatText = () => {
-    const { messages } = this.state;
-    return messages.map((item, index) => (
+        <div className={` ${!isOpen ? "chatbox__active" : "chatbox__support"} `} >
+          <div className="chatbox__header">
+             <div class="chatbox__image--header">
+<img width="50" height="50" src="https://img.icons8.com/doodle/48/frog-face.png" alt="frog-face"/>                      </div>
+                <div class="chatbox__content--header">
+                    <h4 class="chatbox__heading--header">Chat support</h4>
+                    <p class="chatbox__description--header">Hi. Would you like to get to know me better?</p>
+                </div>
+          </div>
+          <div className="chatbox__messages">
+  {allMessages.slice().reverse().map((item, index) => {
+    return (
       <div
-        className={`messages__item ${
-          item.name === 'Sam' ? 'messages__item--visitor' : 'messages__item--operator'
-        }`}
+        className={`messages__item ${item.name === 'Sam' ? 'messages__item__visitor' : 'messages__item__operator'
+          }`}
         key={index}
       >
         {item.message}
       </div>
-    ));
-  };
+    );
+  })}
+</div>
 
-  removeEventListeners() {
-    const { openButton, sendButton, chatBox } = this.args;
-
-    openButton.removeEventListener('click', this.toggleState);
-    sendButton.removeEventListener('click', this.onSendButton);
-    const node = chatBox.querySelector('input');
-    node.removeEventListener('keyup', this.onEnterPress);
-  }
-
-render() {
-    const { isOpen, messages, inputText } = this.state;
-    
-    return (    
-        <div className={`container ${isOpen ? 'chatbox--active' : ''}`}>
-            <div className="chatbox">
-                <div className="chatbox__support">
-                    <div className="chatbox__header">
-                        {/* ... */}
-                    </div>
-                    <div className="chatbox__messages">
-                        {this.updateChatText()}
-                    </div>
-                    <div className="chatbox__footer">
-                        <input
-                            type="text"
-                            placeholder="Write a message..."
-                            value={inputText}
-                            onChange={(e) => this.setState({ inputText: e.target.value })}
-                        />
-                        <button className="chatbox__send--footer send__button" onClick={this.onSendButton}>
-                            Send
-                        </button>
-                    </div>
-                </div>
-                <div className="chatbox__button">
-                    <button onClick={this.toggleState}>
-                        <img src="./images/chatbox-iconn.svg" alt="Chatbox Icon" />
-                    </button>
-                </div>
-            </div>
+          <div className="chatbox__footer">
+            <input
+              type="text"
+              placeholder="Write a message..."
+              value={message}
+               onChange={(event) => setMessage(event.target.value)}
+              onKeyPress={handleKeyPress} // Add this line
+            />
+            <button className="chatbox__send--footer send__button" onClick={() => { onSendButton() }}>
+              Send
+            </button>
+          </div>
         </div>
-    )
+        <div className="chatbox__button">
+          <button onClick={() => { setIsOpen(!isOpen) }}>
+            <img src={chatIcon} alt="Chatbox Icon" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-}
-
-export default Chatbox;
-
-
+export default Chatbox
